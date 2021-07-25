@@ -1,4 +1,7 @@
 ---
+classes: wide
+float: left
+width: 100%
 title: "Redesign of the Lubbock Map Website"
 excerpt_separator: "<!--more-->"
 categories:

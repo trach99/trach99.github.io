@@ -1,4 +1,7 @@
 ---
+classes: wide
+float: left
+width: 100%
 title: Copyright Code in Jekyll
 excerpt_separator: "<!--more-->"
 categories:

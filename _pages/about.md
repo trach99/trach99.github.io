@@ -1,5 +1,8 @@
 ---
 permalink: /about/
+classes: wide
+float: left
+width: 100%
 title: "About"
 ---
 

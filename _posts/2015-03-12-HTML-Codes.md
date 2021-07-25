@@ -1,4 +1,7 @@
 ---
+classes: wide
+float: left
+width: 100%
 title: "HTML Codes"
 excerpt_separator: "<!--more-->"
 categories:

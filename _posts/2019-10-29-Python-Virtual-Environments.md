@@ -1,4 +1,7 @@
 ---
+classes: wide
+float: left
+width: 100%
 title: "Python Virtual Environments"
 excerpt_separator: "<!--more-->"
 categories:

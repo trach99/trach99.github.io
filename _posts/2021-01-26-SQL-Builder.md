@@ -1,4 +1,7 @@
 ---
+classes: wide
+float: left
+width: 100%
 title: "SQL Builder"
 excerpt_separator: "<!--more-->"
 categories: Blog

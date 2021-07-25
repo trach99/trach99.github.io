@@ -1,4 +1,7 @@
 ---
+classes: wide
+float: left
+width: 100%
 title: Viewing Wifi Passwords
 excerpt_separator: "<!--more-->"
 categories:

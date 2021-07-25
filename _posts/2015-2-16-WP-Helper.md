@@ -1,4 +1,7 @@
 ---
+classes: wide
+float: left
+width: 100%
 title: "WP Helper Master"
 excerpt_separator: "<!--more-->"
 categories:
