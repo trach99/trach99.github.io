@@ -1,5 +1,7 @@
 ---
 classes: wide
+float: left
+width: 100%
 title: "Copyright Code in PHP"
 excerpt_separator: "<!--more-->"
 categories:
