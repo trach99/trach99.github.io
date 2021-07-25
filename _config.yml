@@ -81,7 +81,7 @@ footer:
       icon: "fab fa-fw fa-github"
       url: "https://github.com/trach99"
     - label: "Chess"
-      icon: "fab fa-fw fa-chess-board"
+      icon: "fab fa-fw fa-twitter-square"
       url: "https://www.chess.com/member/trach99"
 
 defaults:
