@@ -69,7 +69,7 @@ author:
       icon: "fab fa-fw fa-github"
       url: "https://github.com/trach99"
     - label: "Chess"
-      icon: "fab fa-fw fa-chess-knight"
+      icon: "fab fa-fw fa-chess-pawn"
       url: "https://www.chess.com/member/trach99"
 
 footer:
@@ -81,7 +81,7 @@ footer:
       icon: "fab fa-fw fa-github"
       url: "https://github.com/trach99"
     - label: "Chess"
-      icon: "fab fa-fw fa-chess-knight"
+      icon: "fab fa-fw fa-chess-pawn"
       url: "https://www.chess.com/member/trach99"
 
 defaults:
