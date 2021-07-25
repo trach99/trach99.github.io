@@ -13,11 +13,11 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Clayton Errington – Web & Software Developer
-email:
-description: Specialized web designer and software developer
-twitter_username: cjerrington
-github_username: cjerrington
+title: Austin James 
+email: ajames99@pm.me, ajames1400@rediffmail.com
+description: Pretending to be as humane as possible
+twitter_username: trach99
+github_username: trach99
 minimal_mistakes_skin: dark
 search: true
 
@@ -73,10 +73,13 @@ footer:
   links:
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/cjerrington"
+      url: "https://twitter.com/trach99"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/cjerrington"
+      url: "https://github.com/trach99"
+    - label: "Chess"
+      icon: "fab fa-fw fa-chess-knight"
+      url: "https://www.chess.com/member/trach99"
 
 defaults:
   # _posts
