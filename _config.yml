@@ -55,19 +55,22 @@ plugins:
   - jekyll-include-cache
 
 author:
-  name   : "Clayton Errington"
+  name   : "Austin James"
   avatar : "../images/avatar2.jpg"
-  bio    : "Specialized web designer and software developer"
+  bio    : "Pretending to be as humane as possible"
   links:
     - label: "Website"
       icon: "fas fa-fw fa-link"
-      url: "https://claytonerrington.com"
+      url: "https://austinjames.live"
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/cjerrington"
+      url: "https://twitter.com/trach99"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/cjerrington/"
+      url: "https://github.com/trach99"
+    - label: "Chess"
+      icon: "fab fa-fw fa-chess-knight"
+      url: "https://www.chess.com/member/trach99"
 
 footer:
   links:
