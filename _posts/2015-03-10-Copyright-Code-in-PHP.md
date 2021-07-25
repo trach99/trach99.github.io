@@ -1,4 +1,5 @@
 ---
+classes: wide
 title: "Copyright Code in PHP"
 excerpt_separator: "<!--more-->"
 categories:
