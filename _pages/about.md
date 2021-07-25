@@ -8,8 +8,8 @@ title: "About"
 Austin's interest in general in Computer Science began while atttending College. In addition to his design and programming skills, he has technical expertise in installing and implementing computer systems and designs.
 
 He graduated from Amity University Noida in May 2022 with a Bachelor&rsquo;s of Technology in Electronics and Communications. He is excited to work for a company that is always looking forward to how they can help the community.
-Austin was born in Delhi, India.
-Austin is looking forward to the opportunities that will arise in his job, community, and family. During his spare time, he enjoys playing basketball and football, online chess, and spending time with friends. Clayton would eventually like to own his own business in web design, graphic design and perhaps sometime even some photography.
+
+Austin is looking forward to the opportunities that will arise in his job, community, and family. During his spare time, he enjoys playing basketball and football, online chess, and spending time with friends. Austin would eventually like to own his own business in web design, graphic design and perhaps sometime even some photography.
 
 ### Contact me
 
