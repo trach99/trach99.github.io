@@ -91,7 +91,6 @@ defaults:
       type: posts
     values:
       layout: single
-      classes: wide
       author_profile: false
       read_time: true
       comments: true
@@ -100,7 +99,6 @@ defaults:
   # _pages
   - scope:
       path: "_pages"
-      classes: wide
       type: pages
     values:
       layout: single
