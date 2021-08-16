@@ -1,0 +1,13 @@
+.float-right {
+	float: right;
+}
+
+.float-left {
+	float: left;
+}
+
+.description-image {
+  border-radius: 0.5em;
+  background-color: #131517;
+}
+

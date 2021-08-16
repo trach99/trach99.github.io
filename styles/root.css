@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap');
+
+:root {
+  --accent: #268BD2;
+  --background: #1D1F21;
+  --extra-light-background: #2a2c2e
+}
+
+.vertical-middle{
+   vertical-align: middle;
+}
+
+pre {
+    padding: .5rem .5rem;
+    max-width: 100%;
+    overflow: auto;
+    overflow-x: auto;
+    background: var(--extra-light-background);
+    border: none;
+    border-radius: 5px;
+}
+
+body {
+  margin: 0;
+	margin-bottom: 2em;
+	background: var(--background);
+	color: #efedef;
+	font-family: 'Fira Sans', sans-serif;
+}
+
+main {
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 1050px;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+nav {
+  background-color: #131517;
+  border-bottom: 2px solid var(--accent);
+}
+
+a {
+	color: var(--accent);
+	text-decoration: none;
+}
+
+h2 {
+  margin-top: 10px;
+}
+
+header {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 1050px;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+section {
+  border-radius: 0.5em;
+  background-color: #131517;
+  color: white;
+  border: 2px solid var(--accent);
+  padding: 15px 15px;
+	margin-bottom: 1em;
+}
+
+.btn:link, .btn:visited {
+  border-radius: 0.5em;
+  background-color: var(--background);
+  color: white;
+  border: 2px solid var(--accent);
+  padding: 8px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 1em;
+  margin-top: 1em;
+}
+
+.btn:hover, .btn:active {
+  background-color: var(--extra-light-background);
+  color: white;
+  padding: 10px 17px;
+}
+
+.center-text {
+	text-align: center;
+}
+
+.tiny-margin-bottom {
+	margin-bottom: 0.5em;
+}
+
+.small-margin-right {
+	margin-right: 1em;
+}
+
+.small-margin-left {
+	margin-left: 1em;
+}
+
+.ul-clean {
+	list-style-type: none;
+	padding-inline-start: 20px;
+}
