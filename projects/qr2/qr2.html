@@ -1,0 +1,595 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta charset="UTF-8"/>
+	<title>QR Code generator library</title>
+	<meta http-equiv="Content-Style-Type" content="text/css"/>
+	<meta http-equiv="Content-Script-Type" content="application/javascript"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1"/>
+	<link rel="stylesheet" href="/res/style/style.css" type="text/css"/>
+	<link rel="canonical" href="https://www.nayuki.io/page/qr-code-generator-library"/>
+<style type="text/css">
+article input[type=radio] + label, article input[type=checkbox] + label {
+	margin-right: 0.8em;
+	padding-left: 0.2em;
+}
+article canvas, article svg {
+	padding: 1.0em;
+	background-color: #E8E8E8;
+}
+article form table td:first-child {
+	white-space: pre;
+}
+</style>
+</head>
+
+<body>
+	<header><h1><a href="/">Project Nayuki</a></h1><nav><h2>Navigation</h2><ul><li><a href="/recent-pages/">Recent</a></li><li><a href="/category/programming">Programming</a></li><li><a href="/category/math">Math</a></li><li><a href="/page/summary-of-c-cpp-integer-rules" title="Page: Summary of C/C++ integer rules">Random</a></li></ul><ul><li><a href="/page/about">About/Contact</a></li><li><a href="https://github.com/nayuki" onclick="if('gtag' in window)gtag('event','page_view',{page_path:'https://github.com/nayuki'});">GitHub</a></li></ul></nav></header>
+	<hr/>
+
+<div class="vert-main">
+<div class="horz-main">
+<article>
+<h1><img src="/res/page-icon/64/qr-code-generator-library.png"/> QR Code generator library</h1>
+
+<h2>Introduction</h2>
+<p>This project aims to be the best, clearest library for generating QR Codes. My primary goals are flexible options and absolute correctness. Secondary goals are compact implementation size and good documentation comments.</p>
+<p>This work is an independent implementation based on reading the official ISO specification documents. I believe that my library has a more intuitive API and shorter code length than competing libraries out there. The library is designed first in Java and then ported to TypeScript, Python, Rust, C++, and C. It is open source under the MIT License. For each language, the codebase is roughly 1000 lines of code and has no dependencies other than the respective language’s standard library.</p>
+
+<h2>Live demo (JavaScript)</h2>
+<p>You can generate QR Code symbols conveniently on this web page, powered by the TypeScript version of this library.</p>
+<form onsubmit="event.preventDefault();">
+	<div id="loading"></div>
+	<div id="loaded"></div>
+	<table class="noborder" style="width:100%">
+		<tbody>
+			<tr>
+				<td><label for="text-input"><strong>Text string:</strong></label></td>
+				<td style="width:100%"><textarea placeholder="Enter your text to be put into the QR Code" id="text-input" style="width:100%; max-width:30em; height:5em; font-family:inherit"></textarea></td>
+			</tr>
+			<tr>
+				<td><strong>QR Code:</strong></td>
+				<td>
+					<canvas id="qrcode-canvas" style="display:none"></canvas>
+					<svg xmlns="http://www.w3.org/2000/svg" id="qrcode-svg" style="width:30em; height:30em; display:none" stroke="none">
+						<rect width="100%" height="100%" fill="#FFFFFF"/>
+						<path d="" fill="#000000"/>
+					</svg>
+				</td>
+			</tr>
+			<tr>
+				<td><strong>Error correction:</strong></td>
+				<td>
+					<input type="radio" name="errcorlvl" id="errcorlvl-low" checked="checked"/><label for="errcorlvl-low">Low</label>
+					<input type="radio" name="errcorlvl" id="errcorlvl-medium"/><label for="errcorlvl-medium">Medium</label>
+					<input type="radio" name="errcorlvl" id="errcorlvl-quartile"/><label for="errcorlvl-quartile">Quartile</label>
+					<input type="radio" name="errcorlvl" id="errcorlvl-high"/><label for="errcorlvl-high">High</label>
+				</td>
+			</tr>
+			<tr>
+				<td>Output format:</td>
+				<td>
+					<input type="radio" name="output-format" id="output-format-bitmap" checked="checked"/><label for="output-format-bitmap">Bitmap</label>
+					<input type="radio" name="output-format" id="output-format-vector"/><label for="output-format-vector">Vector</label>
+				</td>
+			</tr>
+			<tr>
+				<td><label for="border-input">Border:</label></td>
+				<td><input type="number" min="0" max="100" step="1" value="4" id="border-input" style="width:4em"/> modules</td>
+			</tr>
+			<tr id="scale-row">
+				<td><label for="scale-input">Scale:</label></td>
+				<td><input type="number" min="1" max="30" step="1" value="8" id="scale-input" style="width:4em"/> pixels per module</td>
+			</tr>
+			<tr>
+				<td>Colors:</td>
+				<td>
+					Light = <input type="text" value="#FFFFFF" id="light-color-input" style="width:6em"/>,
+					dark = <input type="text" value="#000000" id="dark-color-input" style="width:6em"/>
+				</td>
+			</tr>
+			<tr>
+				<td>Version range:</td>
+				<td>
+					Minimum = <input type="number" min="1" max="40" step="1" value="1"  id="version-min-input" style="width:4em" oninput="app.handleVersionMinMax('min');"/>,
+					maximum = <input type="number" min="1" max="40" step="1" value="40" id="version-max-input" style="width:4em" oninput="app.handleVersionMinMax('max');"/>
+				</td>
+			</tr>
+			<tr>
+				<td><label for="mask-input">Mask pattern:</label></td>
+				<td><input type="number" min="-1" max="7" step="1" value="-1" id="mask-input" style="width:4em"/> (−1 for automatic, 0 to 7 for manual)</td>
+			</tr>
+			<tr>
+				<td>Boost ECC:</td>
+				<td><input type="checkbox" checked="checked" id="boost-ecc-input"/><label for="boost-ecc-input">Increase <abbr title="error-correcting code">ECC</abbr> level within same version</label></td>
+			</tr>
+			<tr>
+				<td>Statistics:</td>
+				<td id="statistics-output" style="white-space:pre"></td>
+			</tr>
+			<tr id="svg-xml-row" style="display:none">
+				<td>SVG XML code:</td>
+				<td>
+					<textarea id="svg-xml-output" readonly="readonly" style="width:100%; height:15em; font-family:'Courier 10 Pitch BT',monospace; font-size:80%"></textarea>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<script src="/res/qr-code-generator-library/qrcodegen.js"></script>
+<script src="/res/qr-code-generator-library/qrcodegen-input-demo.js"></script>
+<hr/>
+
+<h2>Features</h2>
+<p>Core features:</p>
+<ul>
+	<li><p>Available in 6 programming languages, all with nearly equal functionality: <a href="#java">Java</a>, <a href="#typescript-javascript">TypeScript/<wbr/>JavaScript</a>, <a href="#python">Python</a>, <a href="#cpp">C++</a>, <a href="#c">C</a>, <a href="#rust">Rust</a></p></li>
+	<li><p>Significantly shorter code but more documentation comments compared to competing libraries (a competitive analysis is provided near the bottom of this page)</p></li>
+	<li><p>Supports encoding all 40 versions (sizes) and all 4 error correction levels, as per the QR Code Model 2 standard</p></li>
+	<li><p>Output format: Raw modules/<wbr/>pixels of the QR symbol</p></li>
+	<li><p>Detects finder-like penalty patterns more accurately than other implementations</p></li>
+	<li><p>Encodes numeric and special-alphanumeric text in less space than general text</p></li>
+	<li><p>Open source code under the permissive MIT License</p></li>
+</ul>
+<p>Manual parameters:</p>
+<ul>
+	<li><p>User can specify minimum and maximum version numbers allowed, then library will automatically choose smallest version in the range that fits the data</p></li>
+	<li><p>User can specify mask pattern manually, otherwise library will automatically evaluate all 8 masks and select the optimal one</p></li>
+	<li><p>User can specify absolute error correction level, or allow the library to boost it if it doesn’t increase the version number</p></li>
+	<li><p>User can create a list of data segments manually and add <abbr title="Extended Channel Interpretation">ECI</abbr> segments (all languages except C)</p></li>
+</ul>
+<p>Optional advanced features (Java only):</p>
+<ul>
+	<li><p>Encodes Japanese Unicode text in kanji mode to save a lot of space compared to UTF-8 bytes</p></li>
+	<li><p>Computes <a href="/page/optimal-text-segmentation-for-qr-codes">optimal segment mode switching</a> for text with mixed numeric/<wbr/>alphanumeric/<wbr/>general/<wbr/>kanji parts</p></li>
+</ul>
+
+<h2>Source code <img src="/res/common/download-icon.svg" alt="" style="width:1.5em; vertical-align:middle"/></h2>
+<p>This library is designed with essentially the same API structure and naming in multiple languages for your convenience: Java, TypeScript, Python, Rust, C++ – but a different API in C to avoid dynamic allocation. Regardless of the language used, the generated results are guaranteed to be identical because the algorithms are translated faithfully.</p>
+<p>For my own convenience when designing and testing the code, the Java language version of the QR Code generator library is considered to be the master reference version. The TypeScript, Python, Rust, and C++ versions are ported from the Java version, with a balance between writing idiomatic code in the target language but also not deviating too much from the Java version’s design. When in doubt, please consult the Java version to read the more extensive documentation comments and to check what types and values are considered legal.</p>
+<p>The full project repository is available at GitHub:<br/>
+<a href="https://github.com/nayuki/QR-Code-generator"><img src="/res/common/github-icon.svg" alt="" style="width:1.3em; vertical-align:middle"/> https://github.com/nayuki/QR-Code-generator</a></p>
+<dl>
+	<dt id="java"><a href="https://github.com/nayuki/QR-Code-generator/tree/master/java/src/main/java/io/nayuki/qrcodegen">Java</a> (<abbr title="Standard Edition">SE</abbr> 7+)</dt>
+	<dd>
+		<p>The library: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/java/src/main/java/io/nayuki/qrcodegen/QrCode.java?ts=4">QrCode.java</a>, <a href="https://github.com/nayuki/QR-Code-generator/blob/master/java/src/main/java/io/nayuki/qrcodegen/QrSegment.java?ts=4">QrSegment.java</a>, <a href="https://github.com/nayuki/QR-Code-generator/blob/master/java/src/main/java/io/nayuki/qrcodegen/BitBuffer.java?ts=4">BitBuffer.java</a><br/>
+		Optional advanced logic (SE 8+): <a href="https://github.com/nayuki/QR-Code-generator/blob/master/java/src/main/java/io/nayuki/qrcodegen/QrSegmentAdvanced.java?ts=4">QrSegmentAdvanced.java</a><br/>
+		Runnable demo program: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/java/QrCodeGeneratorDemo.java?ts=4">QrCodeGeneratorDemo.java</a></p>
+		<p>Available as a package on The Central Repository: <a href="https://search.maven.org/search?q=g:io.nayuki+AND+a:qrcodegen&amp;core=gav">io.nayuki qrcodegen</a><br/>
+		Online Javadoc documentation: <a href="/res/qr-code-generator-library/javadoc/index.html">io.nayuki.qrcodegen</a></p>
+		<p>Usage examples:</p>
+		<pre>import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.List;
+import javax.imageio.ImageIO;
+import io.nayuki.qrcodegen.*;
+
+// Simple operation
+QrCode qr0 = QrCode.encodeText("Hello, world!", QrCode.Ecc.MEDIUM);
+BufferedImage img = toImage(qr0, 4, 10);  // See QrCodeGeneratorDemo
+ImageIO.write(img, "png", new File("qr-code.png"));
+
+// Manual operation
+List&lt;QrSegment> segs = QrSegment.makeSegments("3141592653589793238462643383");
+QrCode qr1 = QrCode.encodeSegments(segs, QrCode.Ecc.HIGH, 5, 5, 2, false);
+for (int y = 0; y &lt; qr1.size; y++) {
+    for (int x = 0; x &lt; qr1.size; x++) {
+        (... paint qr1.getModule(x, y) ...)
+    }
+}</pre>
+		<p>This compact, no-dependency library is your one-stop shop for all your QR Code generation needs. To learn how to use the API, please read the demo program’s source code, and maybe skim the library code’s inline Javadoc comments.</p>
+		<p>For the following practical reasons, Java is my best choice for the reference version because it ensures a high degree of correctness and allows writing detailed documentation comments:</p>
+		<ul>
+			<li><p>Static type checking prevents dumb typos in names and subtly incorrect arguments being passed (such as <code>byte[]</code> vs. <code>BitBuffer</code>). (Whereas Python and JavaScript don’t have static type checking.)</p></li>
+			<li><p>There is a strong and clear separation between public interfaces and private implementation details. (Whereas privacy is only a naming convention in Python, and feasible but hacky/ugly in JavaScript.)</p></li>
+			<li><p>Javadoc is expressive and has a consistent syntax. (Whereas Python, JavaScript, and C++ do not have single dominant syntax for documentation comments.)</p></li>
+			<li><p>Java has good standard libraries for file, image, and network handling, and the language is memory-safe. This makes it easier to build a correct application quickly. (Whereas C++ programming easily gets into third-party library frenzy and undefined behavior hell – even though it does have static typing and proper public/<wbr/>private just like Java.)</p></li>
+			<li><p>Only the Java version of my library contains the advanced segment encoder logic for kanji mode and optimal segment mode switching.</p></li>
+		</ul>
+		<p>For heavy-duty use, there is a <a href="/page/fast-qr-code-generator-library">fast version</a> of this Java library. Its speed-up is about 2 to 5 times (see the <a href="/page/fast-qr-code-generator-library#benchmark-timings">benchmark timings</a> for both libraries).</p>
+	</dd>
+	<dt id="typescript-javascript"><a href="https://github.com/nayuki/QR-Code-generator/tree/master/typescript-javascript">TypeScript/<wbr/>JavaScript</a></dt>
+	<dd>
+		<p>The library: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/typescript-javascript/qrcodegen.ts?ts=4">qrcodegen.ts</a><br/>
+		The demo on this page: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/typescript-javascript/qrcodegen-input-demo.ts?ts=4">qrcodegen-input-demo.ts</a></p>
+		<p>Usage examples:</p>
+		<pre>// Name abbreviated for the sake of these examples here
+const QRC = qrcodegen.QrCode;
+
+// Simple operation
+const qr0 = QRC.encodeText("Hello, world!", QRC.Ecc.MEDIUM);
+const svg = toSvgString(qr0, 4);  // See qrcodegen-input-demo
+
+// Manual operation
+const segs = qrcodegen.QrSegment.makeSegments("3141592653589793238462643383");
+const qr1 = QRC.encodeSegments(segs, QRC.Ecc.HIGH, 5, 5, 2, false);
+for (let y = 0; y &lt; qr1.size; y++) {
+    for (let x = 0; x &lt; qr1.size; x++) {
+        (... paint qr1.getModule(x, y) ...)
+    }
+}</pre>
+		<p>The TypeScript code must be compiled into JavaScript in order to be executed in a web browser, Node.js server, etc. Outputting to ECMAScript 5 is supported, though higher versions are more readable. (Note that Internet Explorer 11 accepts only up to ES5, whereas modern browsers have moved forward.)</p>
+		<p>This TypeScript library’s high-level organization of classes, public/<wbr/>private members, and types on variables all resemble Java. The code uses ECMAScript 2015 (ES6) features like classes, let/const, arrow functions, and for-of loops; additionally it uses TypeScript namespaces.</p>
+		<p>This codebase benefits TypeScript developers because it is fully in TypeScript instead of annotating JavaScript code with declaration files (.d.ts), and it compiles with no errors/<wbr/>warnings under the <code>--strict</code> flag. The codebase benefits JavaScript developers because the type annotations provide documentation about what value types are expected as inputs and outputs, and TypeScript is a gentle extension of the JavaScript language instead of being radically different (such as CoffeeScript, Dart, etc.).</p>
+		<p>Historically, I only had a hand-written JavaScript (ES5) version of this library. Due to ES5’s lack of classes, the code structure had to be significantly rearranged from the Java version. Then I learned TypeScript, ported the code, and maintained both language versions simultaneously. Later on, I decided to remove the hand-written JavaScript version in favor of compilation from TypeScript – because TS syntax is an easy-to-understand extension of JS, and the TS compiler allows me to use new language features (like ES6) and still be able to compile down to an older version (like ES5).</p>
+	</dd>
+	<dt id="python"><a href="https://github.com/nayuki/QR-Code-generator/tree/master/python">Python</a> (3+)</dt>
+	<dd>
+		<p>The library: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/python/qrcodegen.py?ts=4">qrcodegen.py</a><br/>
+		Runnable demo program: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/python/qrcodegen-demo.py?ts=4">qrcodegen-demo.py</a></p>
+		<p>Available as a package on PyPI: <code>pip install <a href="https://pypi.python.org/pypi/qrcodegen">qrcodegen</a></code></p>
+		<p>Usage examples:</p>
+		<pre>from qrcodegen import *
+
+# Simple operation
+qr0 = QrCode.encode_text("Hello, world!", QrCode.Ecc.MEDIUM)
+svg = to_svg_str(qr0, 4)  # See qrcodegen-demo
+
+# Manual operation
+segs = QrSegment.make_segments("3141592653589793238462643383")
+qr1 = QrCode.encode_segments(segs, QrCode.Ecc.HIGH, 5, 5, 2, False)
+for y in range(qr1.get_size()):
+    for x in range(qr1.get_size()):
+        (... paint qr1.get_module(x, y) ...)</pre>
+		<p>Only Python 3 is supported. Please read the demo program’s source code to get a good idea of how to use this library. For further information, consult the big comment at the top of the library source file that summarizes all the public classes, functions, and methods available in the module.</p>
+	</dd>
+	<dt id="cpp"><a href="https://github.com/nayuki/QR-Code-generator/tree/master/cpp">C++</a> (C++11)</dt>
+	<dd>
+		<p>The library: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/cpp/qrcodegen.hpp?ts=4">qrcodegen.hpp</a>, <a href="https://github.com/nayuki/QR-Code-generator/blob/master/cpp/qrcodegen.cpp?ts=4">qrcodegen.cpp</a>
+		Runnable demo program: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/cpp/QrCodeGeneratorDemo.cpp?ts=4">QrCodeGeneratorDemo.cpp</a></p>
+		<p>Usage examples:</p>
+		<pre>#include &lt;string>
+#include &lt;vector>
+#include "QrCode.hpp"
+using namespace qrcodegen;
+
+// Simple operation
+QrCode qr0 = QrCode::encodeText("Hello, world!", QrCode::Ecc::MEDIUM);
+std::string svg = toSvgString(qr0, 4);  // See QrCodeGeneratorDemo
+
+// Manual operation
+std::vector&lt;QrSegment> segs =
+    QrSegment::makeSegments("3141592653589793238462643383");
+QrCode qr1 = QrCode::encodeSegments(
+    segs, QrCode::Ecc::HIGH, 5, 5, 2, false);
+for (int y = 0; y &lt; qr1.getSize(); y++) {
+    for (int x = 0; x &lt; qr1.getSize(); x++) {
+        (... paint qr1.getModule(x, y) ...)
+    }
+}</pre>
+		<p>The code requires C++11 to compile due to numerous convenient features unavailable in C++03, such as better handling of temporary values and <code>const</code> instance fields. The code is fully portable because it only depends on the C++ standard library but not any OS APIs (e.g. POSIX), and it avoids implementation-dependent assumptions on integer widths. The code completely avoids all undefined behavior (e.g. integer overflow, type punning, etc.).</p>
+		<p>Unfortunately, the library is unsuitable for embedded microcontroller environments (e.g. Arduino) due to the use of the heavyweight <abbr title="Standard Template Library">STL</abbr> <code>std::<wbr/>vector</code> class and dynamic memory allocation. The C version is the one specifically designed to supported embedded environments.</p>
+	</dd>
+	<dt id="c"><a href="https://github.com/nayuki/QR-Code-generator/tree/master/c">C</a> (C99)</dt>
+	<dd>
+		<p>The library: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/c/qrcodegen.h?ts=4">qrcodegen.h</a>, <a href="https://github.com/nayuki/QR-Code-generator/blob/master/c/qrcodegen.c?ts=4">qrcodegen.c</a><br/>
+		Runnable demo program: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/c/qrcodegen-demo.c?ts=4">qrcodegen-demo.c</a></p>
+		<p>Usage examples:</p>
+		<pre>#include &lt;stdbool.h>
+#include &lt;stdint.h>
+#include "qrcodegen.h"
+
+// Text data
+uint8_t qr0[qrcodegen_BUFFER_LEN_MAX];
+uint8_t tempBuffer[qrcodegen_BUFFER_LEN_MAX];
+bool ok = qrcodegen_encodeText("Hello, world!",
+    tempBuffer, qr0, qrcodegen_Ecc_MEDIUM,
+    qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX,
+    qrcodegen_Mask_AUTO, true);
+if (!ok)
+    return;
+
+int size = qrcodegen_getSize(qr0);
+for (int y = 0; y &lt; size; y++) {
+    for (int x = 0; x &lt; size; x++) {
+        (... paint qrcodegen_getModule(qr0, x, y) ...)
+    }
+}
+
+// Binary data
+uint8_t dataAndTemp[qrcodegen_BUFFER_LEN_FOR_VERSION(7)]
+    = {0xE3, 0x81, 0x82};
+uint8_t qr1[qrcodegen_BUFFER_LEN_FOR_VERSION(7)];
+ok = qrcodegen_encodeBinary(dataAndTemp, 3, qr1,
+    qrcodegen_Ecc_HIGH, 2, 7, qrcodegen_Mask_4, false);</pre>
+		<p>Notes about this C version of the library:</p>
+		<ul>
+			<li><p>Many projects choose the C programming language instead of C++, due to simpler semantics, faster compilation, and more robust development tools (debuggers, etc.). This version of the library serves this market.</p></li>
+			<li><p>The other 6 language versions are facsimiles of each other in terms of code architecture, but this C library had to be written from scratch to avoid dynamic memory allocation and to fit C’s object-less programming paradigm.</p></li>
+			<li><p>The complete lack of heap allocation makes this code suitable for constrained environments such as operating system kernels and small microcontrollers (e.g. having 16 KiB of RAM). The C++ code, with its use of the heavyweight Standard Template Library (STL) and dynamic memory allocation in <code>std::<wbr/>vector</code>, is probably unsuitable for such environments.</p></li>
+			<li><p>The code requires a C99-compliant compiler and standard library to compile. Note that older versions of Microsoft Visual C++ (before the 2013 release) only supported C89, which make it more difficult to use my library.</p></li>
+			<li><p>This code is portable and platform-independent by design. It makes no assumptions on endianness, integer type widths, two’s complement, etc. It only relies on behavior mandated by the C standard, for example the fact that <code>int</code> must be at least 16 bits wide.</p></li>
+			<li><p>This C code uses much more low-level indexing and raw buffer passing than the other 6 language versions, so the correctness of the logic is much less obvious at a glance. The safety of this C library was assured in multiple ways: Being mindful of value ranges and choosing suitably sized integer types, designing arithmetic calculations to carefully avoid overflow, running the code under Clang’s UndefinedBehaviorSanitizer and AddressSanitizer and MemorySanitizer, and feeding millions of random inputs then testing for identical output against other language versions.</p></li>
+			<li><p>The code only uses integer arithmetic, no floating-point arithmetic. This is good for small microcontroller CPUs without an <abbr title="floating-point unit">FPU</abbr>.</p></li>
+			<li>
+				<p>Here are a photo and video showing the C version of the QR Code generator library running on a <a href="https://www.pjrc.com/teensy/" title="PJRC: Teensy USB Development Board">PJRC Teensy 3.1</a> microcontroller. Remember that in the worst case, rendering a version 40 QR Code requires 8&#xA0;KB of RAM (including temporary scratch space).</p>
+				<div>
+					<div class="container inline">
+						<a href="/res/qr-code-generator-library/teensy-qrcodegen.jpg"><img src="/res/qr-code-generator-library/teensy-qrcodegen-thumb.jpg" alt="" style="height:15em"/></a>
+					</div>
+					<div class="container inline">
+						<video src="/res/qr-code-generator-library/teensy-qrcodegen.mp4" style="width:20em; height:15em" controls="controls" preload="none"/>
+					</div>
+				</div>
+			</li>
+		</ul>
+	</dd>
+	<dt id="rust"><a href="https://github.com/nayuki/QR-Code-generator/tree/master/rust">Rust</a></dt>
+	<dd>
+		<p>The library: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/rust/src/lib.rs?ts=4">lib.rs</a><br/>
+		Runnable demo program: <a href="https://github.com/nayuki/QR-Code-generator/blob/master/rust/examples/qrcodegen-demo.rs?ts=4">qrcodegen-demo.rs</a></p>
+		<p>Available as a package on Crates.io: <a href="https://crates.io/crates/qrcodegen">qrcodegen</a><br/>
+		Online documentation at Docs.rs: <a href="https://docs.rs/qrcodegen/latest/qrcodegen/">qrcodegen</a></p>
+		<p>Usage examples:</p>
+		<pre>extern crate qrcodegen;
+use qrcodegen::QrCode;
+use qrcodegen::QrCodeEcc;
+use qrcodegen::QrSegment;
+
+// Simple operation
+let qr = QrCode::encode_text("Hello, world!",
+    QrCodeEcc::Medium).unwrap();
+let svg = to_svg_string(&amp;qr, 4);  // See qrcodegen-demo
+
+// Manual operation
+let chrs: Vec&lt;char> = "3141592653589793238462643383".chars().collect();
+let segs = QrSegment::make_segments(&amp;chrs);
+let qr = QrCode::encode_segments_advanced(
+    &amp;segs, QrCodeEcc::High, 5, 5, Some(Mask::new(2)), false).unwrap();
+for y in 0 .. qr.size() {
+    for x in 0 .. qr.size() {
+        (... paint qr.get_module(x, y) ...)
+    }
+}</pre>
+		<p>Notes about this Rust version of the library:</p>
+		<ul>
+			<li><p>Has no crate dependencies, only relying on the standard library.</p></li>
+			<li><p>The source code files are laid out in directories according to the Cargo project format.</p></li>
+			<li><p>The higher level text APIs take <code>&amp;str</code> (UTF-8 byte sequence), whereas the lower APIs take <code>&amp;[char]</code> (Unicode code point sequence).</p></li>
+			<li><p>Unlike the {Java, JavaScript, TypeScript, Python, C++} language versions which throw exceptions for various conditions, the Rust version panics if an input violates a precondition (e.g. number out of range, character value outside of designated set). However, the encoder functions return <code>Err</code> if the data is too long to fit in a QR Code, because this precondition is quite difficult for a library user to check ahead of time.</p></li>
+		</ul>
+	</dd>
+</dl>
+
+<h2>Third-party ports</h2>
+<p>A number of people have translated this library to other programming languages. These third-party libraries vary in their quality and faithfulness to my original work, and are not backed by my personal guarantee.</p>
+<ul>
+	<li><a href="https://github.com/manuelbl/QrCodeGenerator">C# by Manuel Bleichenbacher</a></li>
+	<li><a href="https://github.com/BlockchainCommons/QRCodeGenerator">Swift by Wolf McNally</a></li>
+	<li><a href="https://github.com/fwcd/swift-qrcode-generator">Swift by fwcd</a></li>
+	<li><a href="https://github.com/apwilson/QR-Code-generator/tree/master/dart">Dart by Andrew Wilson</a></li>
+	<li><a href="https://github.com/alexkazik/qrcode">Haskell by ALeX Kazik</a></li>
+	<li><a href="https://github.com/Xor-el/QRCodeGenLib4Pascal">Pascal by Ugochukwu Mmaduekwe</a></li>
+	<li><a href="https://www.purebasic.fr/english/viewtopic.php?f=12&amp;t=76558">PureBasic by infratec</a></li>
+	<li><a href="https://github.com/ricmoo/QRCode">C by Richard Moore</a> (originally published 10 days before my C implementation)</li>
+</ul>
+
+<hr/>
+<h2>QR Code technology overview</h2>
+<p>The QR Code standard defines a method to encode a string of characters or bytes into a grid of dark and light pixels. The text could be numbers, names, URLs, et cetera. Because the standard uses a 2D barcode, it can store much more information than a traditional 1D barcode. To illustrate for comparison, a 1D barcode usually stores 10 to 20 digits, while a QR code often stores 50 textual characters. Note that a QR Code barcode simply represents static data – the barcode does not inherently cause an action to be executed.</p>
+
+<h3>Terminology</h3>
+<p>Some of the frequently used official terminology have non-intuitive meanings, as summarized below:</p>
+<dl>
+	<dt>QR Code</dt>
+	<dd><p>A popular international standard (symbology), created by Denso Wave, that specifies how messages are converted to barcodes.</p></dd>
+	<dt>QR Code symbol</dt>
+	<dd><p>A single 2D graphical barcode, which results from the QR Code generation process. Informally this is called a “QR code” (without using the word <i>symbol</i>) or a barcode.</p></dd>
+	<dt>Module</dt>
+	<dd><p>A dark or light pixel in a QR Code symbol. Note that a module can be scaled to occupy multiple pixels on a screen or in an image file.</p></dd>
+	<dt>Version</dt>
+	<dd><p>A way of measuring the size of a symbol, from 1 to 40. Version 1 has 21×21 modules, version 2 has 25×25, ..., and version 40 has 177×177. Note that all 40 versions are defined in a single standard, and this term differs from the conventional meaning of the word <i>version</i>.</p></dd>
+	<dt>Model</dt>
+	<dd><p>Indicates the revision of the QR Code standard. (The word <i>model</i> here corresponds with the conventional meaning of the word <i>version</i>.) Model 1 QR codes are outdated and essentially never seen. Model 2 QR codes are widespread and dominant. Model 2 also has an extension called Micro QR codes (not implemented in my library). Note that model 1 defines versions 1 through 14, whereas model 2 QR defines versions 1 through 40, allowing much more data capacity.</p></dd>
+</dl>
+
+<h3>Generation procedure</h3>
+<p>The process (and high-level algorithm) for generating a QR Code symbol is as follows:</p>
+<ol>
+	<li><p>Choose the text (Unicode string) or binary data (byte string) to encode.</p></li>
+	<li><p>Choose one of the 4 error correction levels (ECL). A higher <abbr title="error correction code">ECC</abbr> level will yield a barcode that tolerates more damaged parts while preserving the payload data, but will tend to increase the version number (i.e. more modules in width and height).</p></li>
+	<li><p>Encode the text into a sequence of zero or more segments. A segment in byte mode can encode any data, but using alphanumeric or numeric mode is more compact if the text falls into these subsets.</p></li>
+	<li><p>Based on the segments to be encoded and the ECL, choose a suitable QR Code version to contain the data, preferably the smallest one.</p></li>
+	<li><p>Concatenate the segments (which have headers and payload) and add a terminator. The result is a sequence of bits.</p></li>
+	<li><p>Add padding bits and bytes to fill the remaining data space (based on the version and ECL).</p></li>
+	<li><p>Reinterpret the bitstream as a sequence of bytes, then divide it into blocks. Compute and append error correction bytes to each block. Interleave bytes from each block to form the final sequence of 8-bit codewords to be drawn.</p></li>
+	<li><p>Initialize a blank square grid based on the version number.</p></li>
+	<li><p>Draw the function patterns (finders, alignment, timing, version info, etc.) onto the appropriate modules. This is formatting overhead to support the QR Code standard, and does not encode any user data.</p></li>
+	<li><p>Draw the sequence of (data + error correction) codewords onto the QR Code symbol, starting from the bottom right. Two columns at a time are used, and the scanning process zigzags going upward and downward. Any module that was drawn for a function pattern is skipped over in this step.</p></li>
+	<li><p>Either manually or automatically choose a mask pattern to apply to the data modules. If masking automatically, then all 8 possibilities are tested and the one with the lowest penalty score is accepted. Note that the format information is redrawn to reflect the mask chosen.</p></li>
+	<li><p>We are now finished the algorithmic parts of QR Code generation. The remaining work is to render the newly generated barcode symbol as a picture on screen, or save it as an image file on disk.</p></li>
+</ol>
+<p>In the context of the steps above, my QR Code generator library provides the logic to perform steps 3 through 11. The other steps must be performed by the user of the library.</p>
+
+<h2>Compared to competitors</h2>
+<dl>
+	<dt>qrcodegen by Project Nayuki (Java, JavaScript, Python, C++, C, Rust)</dt>
+	<dd>
+		<ul>
+			<li><p>Relatively compact implementation – 1260 lines of code for the <a href="https://github.com/nayuki/QR-Code-generator/tree/8f9c1be97466a94f6a7c0d8b6653e5267978a679/java/src/main/java/io/nayuki/qrcodegen">Java</a> version (without QrSegmentAdvanced), 970 lines for <a href="https://github.com/nayuki/QR-Code-generator/tree/8f9c1be97466a94f6a7c0d8b6653e5267978a679/typescript">TypeScript</a>, 890 lines for <a href="https://github.com/nayuki/QR-Code-generator/tree/8f9c1be97466a94f6a7c0d8b6653e5267978a679/python">Python</a>, 1340 lines for <a href="https://github.com/nayuki/QR-Code-generator/tree/8f9c1be97466a94f6a7c0d8b6653e5267978a679/cpp">C++</a>, 1280 lines for <a href="https://github.com/nayuki/QR-Code-generator/tree/8f9c1be97466a94f6a7c0d8b6653e5267978a679/c">C</a>, 1270 lines for <a href="https://github.com/nayuki/QR-Code-generator/tree/8f9c1be97466a94f6a7c0d8b6653e5267978a679/rust">Rust</a>. (Each version is independent, so it’s meaningless to add up all the line counts.)</p></li>
+			<li><p>The extra advanced features (kanji mode, optimal segment mode switching) in the Java version cost another 290 lines of code and 110 lines of constants</p></li>
+			<li><p>Line counts include the generous amount of comments for functions, comments for blocks of statements, and blank lines – but exclude header comments of author and license info</p></li>
+			<li><p>Contains as few tables of numerical constants as needed – unlike competitors, this implementation does not have tables of: data capacities per version, alignment pattern positions, error correction block sizes, expanded format and version bits, Reed-Solomon divisor polynomials, or finite field <abbr title="exponentiation">exp</abbr>/<abbr title="logarithm">log</abbr> tables</p></li>
+			<li><p>The QR Code and helper objects are all immutable, thus simplifying user operation and reducing errors from accidental misuse of the API</p></li>
+			<li><p>Creates a single segment in numeric, alphanumeric, or byte mode; encodes custom list of segments</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/nayuki/QR-Code-generator/tree/8f9c1be97466a94f6a7c0d8b6653e5267978a679">8f9c1be97466</a>, dated 2021-07-28</p></li>
+		</ul>
+	</dd>
+	<dt>qr.js by Kang Seonghoon (JavaScript)</dt>
+	<dd>
+		<ul>
+			<li><p>About 800 lines of core code in the library</p></li>
+			<li><p>Code is quite concise, minimizing the size of constant tables and avoiding verbose logic</p></li>
+			<li><p>Includes generous comments explaining the overview of behavior</p></li>
+			<li><p>The organization and behavior of subfunctions (such as computing the number of bits and characters, and painting different sets of QR Code modules) are surprisingly similar to my design, despite the fact that he published one year earlier than me and I had never seen his code until months after I published my library</p></li>
+			<li><p>The code is more compact than mine in areas such as the bit buffer and segment encoding, because they are inlined into the QR Code generation workflow instead of being exported as freestanding modules</p></li>
+			<li><p>Creates a single segment in numeric, alphanumeric, or byte mode; cannot encode custom list of segments</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/lifthrasiir/qr.js/tree/52f0409a22c5ece6a598f1a81a2ab1d9a3e11458">52f0409a22c5</a>, dated 2015-04-11</p></li>
+		</ul>
+	</dd>
+	<dt>qr.js by Alasdair Mercer (JavaScript)</dt>
+	<dd>
+		<ul>
+			<li><p>About 1200 lines of core code in the library</p></li>
+			<li><p>qr.js: 800 lines for main QR encoding logic, 110 lines for numerical tables, 300 lines for image export; note that generateFrame() is a 400-line monolithic function</p></li>
+			<li><p>Code includes a good number of comments inside and outside functions</p></li>
+			<li><p>Only supports ASCII text and silently corrupts non-ASCII Unicode characters; creates a single segment always in byte mode; cannot encode custom list of segments</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/neocotic/qrious/tree/18decea6ba9a8b748ad6e1eaaa168c8366e8c0dc">18decea6ba9a</a>, dated 2015-11-11. The library has since been renamed to QRious</p></li>
+		</ul>
+	</dd>
+	<dt>QR Code Generator by Kazuhiko Arase (JavaScript, others)</dt>
+	<dd>
+		<ul>
+			<li><p>About 1840 lines of core code in the JavaScript library</p></li>
+			<li><p>qrcode.js: 860 lines of code for main QR encoding logic, 340 lines for numerical tables, 360 lines for HTML and GIF output, 280 lines for binary encoding utilities</p></li>
+			<li><p>Contains no comments at all to describe functions; sparsely contains low-level comments to describe chunks of logic statements</p></li>
+			<li><p>The author has ported the library to multiple languages, but with different levels of features. The JavaScript version appears to be the most feature-complete, the Java version has fewer features but more documentation comments, and others have fewer features and comments.</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/kazuhikoarase/qrcode-generator/tree/94f0023b802a7e78462e14defd75d95148780ce6">94f0023b802a</a>, dated 2016-01-23</p></li>
+		</ul>
+	</dd>
+	<dt>QR-Logo by Henrik Kaare Poulsen (JavaScript)</dt>
+	<dd>
+		<ul>
+			<li><p>About 2900 lines of core code in the library</p></li>
+			<li><p>Supports encoding and <strong>decoding</strong> QR Code symbols</p></li>
+			<li><p>qrcodedecode.js: 970 lines of code for an encoder with the typical features, 1100 lines for a decoder that can operate on imperfect images (i.e. not axis-aligned with whole-pixel module size), 410 lines for tables of numbers</p></li>
+			<li><p>reedsolomon.js: 420 lines of code for Reed-Solomon encoding, decoding syndrome calculation, error correction, polynomial arithmetic</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/kaarposoft/qrlogo/tree/b3a77e8f0145f3b380d85e73c827c4ca3274a2e8">b3a77e8f0145</a>, dated 2011-10-15</p></li>
+		</ul>
+	</dd>
+	<dt>qrcode by Lincoln Loop (Python)</dt>
+	<dd>
+		<ul>
+			<li><p>About 1300 lines of core code in the library</p></li>
+			<li><p>main.py: 420 lines for text accumulation, module drawing, terminal printing</p></li>
+			<li><p>util.py: 550 lines for tables of various constants, QR symbol penalty calculation, segment encoding logic, bit buffer class, block error correction and interleaving, bitstream formatting</p></li>
+			<li><p>base.py: 360 lines for finite field tables, error correction block sizes, polynomial class</p></li>
+			<li><p>Code documentation/<wbr/>comments are neglectfully sparse in most places, but main.py has some good comments for the public methods of the QRCode class</p></li>
+			<li><p>Creates a single segment in numeric, alphanumeric, or byte mode; creates imperfectly optimized list of segments; encodes custom list of segments</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/lincolnloop/python-qrcode/tree/b79ab5b3e5989d6b0f13c2737c9ee8424b4dd21f">b79ab5b3e598</a>, dated 2016-03-15</p></li>
+		</ul>
+	</dd>
+	<dt>PyQRCode by Michael Nooner (Python)</dt>
+	<dd>
+		<ul>
+			<li><p>About 2800 lines of core code in the library</p></li>
+			<li><p>builder.py: 900 lines of code for segment encoding, bitstream formatting, ECC generation, module drawing, symbol penalty calculation; 500 lines for export logic to various image formats</p></li>
+			<li><p>__init__.py: 620 lines for mostly character encoding logic, some one-liner wrapper methods for exporting images, and long documentation comments</p></li>
+			<li><p>tables.py: 750 lines of almost entirely numeric constants</p></li>
+			<li><p>Generally speaking the function-level documentation comments are long (and longer than my typical writing), there are comments every 5 or so lines within functions to describe the algorithmic processes (just like I do), but the implementation seems to use a lot of code just to implement basic behaviors</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/mnooner256/pyqrcode/tree/467f9a2a3c0441440c5b722bf454da4f8c72772b">467f9a2a3c04</a>, dated 2016-02-26</p></li>
+		</ul>
+	</dd>
+	<dt>qrcode by kennytm (Rust)</dt>
+	<dd>
+		<ul>
+			<li><p>About 2800 of core code in the library, when the embedded pieces of test and benchmark code are removed</p></li>
+			<li><p>Includes plenty of documentation comments throughout, and at least 200 lines of tables of numbers in ec.rs</p></li>
+			<li><p>Apparently supports encoding Micro QR Codes and kanji mode</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/kennytm/qrcode-rust/tree/ba77f8bc2d9baa8b0ab0bee8f04f4d27b20745c6">ba77f8bc2d9b</a>, dated 2017-07-18</p></li>
+		</ul>
+	</dd>
+	<dt>qr by Russ Cox (Go)</dt>
+	<dd>
+		<ul>
+			<li><p>About 1850 lines of core code in the library, excluding tests</p></li>
+			<li><p>Spends hundreds of lines of code on tables of constants</p></li>
+			<li><p>Code contains few comments, not easy to understand the public API that a developer should use</p></li>
+			<li><p>No penalty calculation or automatic masking</p></li>
+			<li><p>Implements a simple PNG encoder from scratch</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/rsc/qr/tree/ca9a01fc2f9505024045632c50e5e8cd6142fafe">ca9a01fc2f95</a>, dated 2018-06-05</p></li>
+		</ul>
+	</dd>
+	<dt>Zint by Ismael Luceno and Robin Stuart (C)</dt>
+	<dd>
+		<ul>
+			<li><p>About 2400 lines of code among qr.c/h and reedsol.c/h</p></li>
+			<li><p>Can encode many types of 1D and 2D barcodes, and includes GUI application</p></li>
+			<li><p>Uses heap memory allocation; mutable global variables to store current Reed-Solomon tables (not thread-safe)</p></li>
+			<li><p>Low-density logic in code, not much API documentation comments, 100 lines of QR constants</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/zint/zint/tree/3432bc9aff311f2aea40f0e9883abfe6564c080b">3432bc9aff31</a>, dated 2013-07-09</p></li>
+		</ul>
+	</dd>
+	<dt>libqrencode by Kentaro Fukuchi (C)</dt>
+	<dd>
+		<ul>
+			<li><p>About <strong>6800</strong> lines of core code in the library</p></li>
+			<li><p>The most popular C library for QR Code encoding by far</p></li>
+			<li><p>Has third-party wrappers for various high-level languages, and numerous patches over the years</p></li>
+			<li><p>Uses dynamic memory allocation, unlike my zero-allocation C library</p></li>
+			<li><p>Supports even more advanced features absent from my library, such as Micro QR codes and structured append mode</p></li>
+			<li><p>Code seems confusing with over 50 public API functions</p></li>
+			<li><p>The version reviewed was <a href="https://github.com/fukuchi/libqrencode/tree/1ef82bd299946da694798af7def63da0cbe3d422">1ef82bd29994</a>, dated 2017-03-15</p></li>
+		</ul>
+	</dd>
+</dl>
+
+<h2>More info</h2>
+<ul>
+	<li><a href="https://en.wikipedia.org/wiki/QR_code">Wikipedia: QR code</a></li>
+	<li><a href="https://www.qrcode.com/en/">QRcode.com by Denso Wave</a></li>
+	<li><a href="https://web.archive.org/web/20140630004133/https://www.codeplex.com/Download?ProjectName=qrcodenet&amp;DownloadId=321409">ISO/IEC 18004:2006 – QR Code 2005 bar code symbology specification</a> (recommended)</li>
+	<li><a href="https://web.archive.org/web/20140630152807/http://www.codeplex.com/Download?ProjectName=qrcodenet&amp;DownloadId=284291">ISO/IEC 18004:2000 – Bar code symbology – QR Code</a> (old standard)</li>
+	<li><a href="https://www.thonky.com/qr-code-tutorial/">Thonky.com: QR Code Tutorial</a></li>
+</ul>
+<footer>
+	<div>Categories: <a href="/category/programming">Programming</a>, <a href="/category/image-processing">Image processing</a>, <a href="/category/java">Java</a>, <a href="/category/javascript-typescript">JavaScript / TypeScript</a>, <a href="/category/python">Python</a>, <a href="/category/cpp">C++</a>, <a href="/category/c">C</a></div>
+	<div>Last updated: <a href="/recent-pages/" id="datelink"><time>2021-08-18</time></a></div>
+</footer>
+</article>
+
+<hr/>
+<aside>
+	<h2>Related / browse</h2>
+	<ul>
+		<li class="explicit-related"><a href="/page/creating-a-qr-code-step-by-step">Creating a QR Code step by step</a></li>
+		<li class="explicit-related"><a href="/page/optimal-text-segmentation-for-qr-codes">Optimal text segmentation for QR Codes</a></li>
+		<li class="explicit-related"><a href="/page/fast-qr-code-generator-library">Fast QR Code generator library</a></li>
+		<li class="explicit-related"><a href="/page/1d-barcode-generator-javascript">1D barcode generator (JavaScript)</a></li>
+		<li class="random-related"><a href="/page/analog-vs-digital-games">Analog vs. digital games</a></li>
+	</ul>
+</aside>
+</div>
+<hr/>
+<nav>
+	<h2>Sidebar</h2>
+	<h3>Recent</h3>
+	<table>
+		<tbody>
+			<tr><td><a href="/page/png-file-chunk-inspector"><img src="/res/page-icon/64/png-file-chunk-inspector.png" alt=""/></a></td><td><a href="/page/png-file-chunk-inspector">PNG file chunk inspector</a></td></tr>
+			<tr><td><a href="/page/qr-code-generator-library"><img src="/res/page-icon/64/qr-code-generator-library.png" alt=""/></a></td><td><a href="/page/qr-code-generator-library">QR Code generator library</a></td></tr>
+			<tr><td><a href="/page/cryptographic-primitives-in-plain-python"><img src="/res/page-icon/64/cryptographic-primitives-in-plain-python.png" alt=""/></a></td><td><a href="/page/cryptographic-primitives-in-plain-python">Cryptographic primitives in plain Python</a></td></tr>
+			<tr><td><a href="/page/practical-guide-to-xhtml"><img src="/res/page-icon/64/practical-guide-to-xhtml.png" alt=""/></a></td><td><a href="/page/practical-guide-to-xhtml">Practical guide to XHTML</a></td></tr>
+			<tr><td><a href="/page/project-euler-solutions"><img src="/res/page-icon/64/project-euler-solutions.png" alt=""/></a></td><td><a href="/page/project-euler-solutions">Project Euler solutions</a></td></tr>
+			<tr><td></td><td><a href="/recent-pages/" title="Recent pages">(more)</a></td></tr>
+		</tbody>
+	</table>
+	<h3>Random</h3>
+	<table>
+		<tbody>
+			<tr><td><a href="/page/fast-whirlpool-hash-in-x86-assembly"><img src="/res/page-icon/64/fast-whirlpool-hash-in-x86-assembly.png" alt=""/></a></td><td><a href="/page/fast-whirlpool-hash-in-x86-assembly">Fast Whirlpool hash in x86 assembly</a></td></tr>
+			<tr><td><a href="/page/free-small-fft-in-multiple-languages"><img src="/res/page-icon/64/free-small-fft-in-multiple-languages.png" alt=""/></a></td><td><a href="/page/free-small-fft-in-multiple-languages">Free small FFT in multiple languages</a></td></tr>
+			<tr><td><a href="/page/computing-wikipedias-internal-pageranks"><img src="/res/page-icon/64/computing-wikipedias-internal-pageranks.png" alt=""/></a></td><td><a href="/page/computing-wikipedias-internal-pageranks">Computing Wikipedia’s internal PageRanks</a></td></tr>
+			<tr><td></td><td><a href="/page/" title="All pages">(more)</a></td></tr>
+		</tbody>
+	</table>
+	<h3>RSS feed</h3>
+	<table id="sidebar-rss">
+		<tbody>
+			<tr><td><a href="/rss20.xml"><img src="/res/style/rss-feed.svg" alt=""/></a></td><td><a href="/rss20.xml">Subscribe for updates</a></td></tr>
+		</tbody>
+	</table>
+</nav>
+</div>
+
+<hr/>
+<footer>
+	<p><strong>Feedback:</strong> Question/comment? <a href="/page/about#contact">Contact me</a></p>
+	<p><a href="/page/about#copyright" id="copyrightlink" title="Copyright information">Copyright © 2021 Project Nayuki</a></p>
+</footer>
+<script src="https://www.googletagmanager.com/gtag/js?id=UA-23532931-1" async="async"></script>
+<script>window.dataLayer=window.dataLayer||[]; function gtag(){dataLayer.push(arguments);} gtag("js",new Date()); gtag("config","UA-23532931-1");</script>
+</body>
+</html>
